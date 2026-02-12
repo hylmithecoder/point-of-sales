@@ -96,6 +96,7 @@ const CategoryPage = () => {
               <TableHead className="w-[100px] px-6 py-4">ID</TableHead>
               <TableHead className="px-6 py-4">Category Name</TableHead>
               <TableHead className="px-6 py-4">Description</TableHead>
+              <TableHead className="px-6 py-4">Image</TableHead>
               <TableHead className="w-[80px] text-right px-6 py-4">
                 Actions
               </TableHead>
@@ -127,6 +128,17 @@ const CategoryPage = () => {
                   </TableCell>
                   <TableCell className="text-slate-600 px-6 py-4">
                     {category.description}
+                  </TableCell>
+                  <TableCell className=" px-6 py-4">
+                    <img
+                      src={
+                        category.image?.url
+                          ? `${process.env.NEXT_PUBLIC_API_URL}${category.image.url}`
+                          : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
+                      }
+                      alt={category.image?.altText || "category image"}
+                      className="h-16 w-16 object-cover rounded"
+                    />
                   </TableCell>
                   <TableCell className="text-right px-6 py-4">
                     <DropdownMenu>

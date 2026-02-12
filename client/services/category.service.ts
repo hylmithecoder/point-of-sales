@@ -1,5 +1,4 @@
 import { Category } from "@/types/entity/category";
-import { CategoryRequest } from "@/types/entity/payload/request/category.request";
 import { ApiClient } from "./config/api.client";
 
 export class CategoryService {
@@ -11,15 +10,15 @@ export class CategoryService {
     return ApiClient.get(`category/${id}`).json<Category>();
   }
 
-  static async createCategory(data: CategoryRequest) {
+  static async createCategory(data: FormData) {
     return ApiClient.post("category", {
-      json: data,
+      body: data,
     }).json<Category>();
   }
 
-  static async updateCategory(id: number, data: CategoryRequest) {
+  static async updateCategory(id: number, data: FormData) {
     return ApiClient.put(`category/${id}`, {
-      json: data,
+      body: data,
     }).json<Category>();
   }
 

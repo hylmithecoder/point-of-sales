@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CategoryService } from "@/services/category.service";
-import { CategoryRequest } from "@/types/entity/payload/request/category.request";
+import { CategoryRequest } from "@/types/payload/request/category.request";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -32,9 +32,9 @@ const CreateCategoryModal = ({
 
   const createCategoryMutation = useMutation({
     mutationKey: ["create_category"],
-    mutationFn: (data: CategoryRequest) => CategoryService.createCategory(data),
+    mutationFn: (data: FormData) => CategoryService.createCategory(data),
     onSuccess: () => toast.success("Category created successfully"),
-    onError: () => toast.error("Failed to create category"),
+    onError: (e) => toast.error(e.message),
     onSettled: async () => {
       return await queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
@@ -50,7 +50,12 @@ const CreateCategoryModal = ({
   });
 
   const onSubmit: SubmitHandler<CategoryRequest> = (data: CategoryRequest) => {
-    createCategoryMutation.mutate(data);
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("description", data.description);
+    formData.append("image", data.image[0]);
+
+    createCategoryMutation.mutate(formData);
   };
 
   return (
@@ -94,6 +99,21 @@ const CreateCategoryModal = ({
             {errors.description && (
               <p className="text-sm text-red-500">
                 {errors.description.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">Category Image</Label>
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              {...register("image")}
+            />
+            {errors.image && (
+              <p className="text-sm text-red-500">
+                {errors.image.message as string}
               </p>
             )}
           </div>

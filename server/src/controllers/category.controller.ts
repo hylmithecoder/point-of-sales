@@ -13,14 +13,34 @@ export const CategoryController = {
   },
 
   createCategory: async (req: Request, res: Response) => {
-    const category = await CategoryService.createCategory(req.body);
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const payload = {
+      name: req.body.name,
+      description: req.body.description,
+      image: req.file,
+    };
+
+    const category = await CategoryService.createCategory(payload);
     res.status(201).json(category);
   },
 
   updateCategory: async (req: Request, res: Response) => {
     const id = Number(req.params.id);
-    const category = await CategoryService.updateCategory(id, req.body);
-    res.json(category);
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const payload = {
+      name: req.body.name,
+      description: req.body.description,
+      image: req.file,
+    };
+
+    const category = await CategoryService.updateCategory(id, payload);
+    res.status(201).json(category);
   },
 
   deleteCategory: async (req: Request, res: Response) => {

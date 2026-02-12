@@ -13,6 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CategoryService } from "@/services/category.service";
+import { Category } from "@/types/entity/category";
+import { useQuery } from "@tanstack/react-query";
 import {
   Check,
   CheckCircle,
@@ -106,7 +109,7 @@ const Page = () => {
     },
   ]);
 
-  const categories = [
+  const categoriess = [
     { name: "Drink", items: "72 items", icon: "🥤", color: "bg-emerald-500" },
     { name: "Burger", items: "12 items", icon: "🍔", color: "bg-orange-500" },
     { name: "Pizza", items: "15 items", icon: "🍕", color: "bg-red-500" },
@@ -277,6 +280,22 @@ const Page = () => {
     }
   };
 
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => CategoryService.findAllCategories(),
+  });
+
+  const colors = [
+    "bg-orange-500",
+    "bg-emerald-500",
+    "bg-purple-500",
+    "bg-green-500",
+    "bg-red-500",
+    "bg-pink-500",
+    "bg-amber-500",
+    "bg-cyan-500",
+  ];
+
   return (
     <div className="flex gap-x-5">
       <div className="space-y-6">
@@ -350,19 +369,30 @@ const Page = () => {
           </h2>
           <ScrollArea className="max-w-6xl pb-2 rounded-md">
             <div className="grid grid-flow-col auto-cols-[160px] gap-3">
-              {categories.map((cat) => (
+              {categories?.map((category: Category, index: number) => (
                 <button
-                  key={cat.name}
-                  onClick={() => setSelectedCategory(cat.name)}
-                  className={`${cat.color} rounded-xl p-4 text-center text-white font-medium transition-all transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg ${
-                    selectedCategory === cat.name
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.name)}
+                  className={`${colors[index % colors.length]} rounded-xl p-4 text-center text-white font-medium transition-all transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg ${
+                    selectedCategory === category.name
                       ? "ring-4 ring-blue-300 ring-offset-2"
                       : ""
                   }`}
                 >
-                  <div className="text-3xl mb-2">{cat.icon}</div>
-                  <p className="text-sm font-semibold truncate">{cat.name}</p>
-                  <p className="text-xs opacity-90 mt-1">{cat.items}</p>
+                  <div className="flex justify-center mb-2">
+                    <img
+                      src={
+                        category.image?.url
+                          ? `${process.env.NEXT_PUBLIC_API_URL}${category.image.url}`
+                          : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
+                      }
+                      alt={category.image?.altText || "category image"}
+                      className="h-16 w-16 object-cover rounded"
+                    />
+                  </div>
+                  <p className="text-sm font-semibold truncate">
+                    {category.name}
+                  </p>
                 </button>
               ))}
             </div>

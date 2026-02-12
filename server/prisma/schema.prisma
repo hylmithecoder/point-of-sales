@@ -8,7 +8,106 @@ datasource db {
 }
 
 model Category {
-  id    Int     @id @default(autoincrement())
-  name  String
+  id          Int        @id @default(autoincrement())
+  name        String
   description String?
+  imageId     Int?
+  image       Image?     @relation(fields: [imageId], references: [id])
+  menuItems   MenuItem[]
+}
+
+model MenuItem {
+  id          Int         @id @default(autoincrement())
+  name        String
+  sku         String      @unique
+  description String?
+  price       Float
+  imageId     Int?
+  image       Image?      @relation(fields: [imageId], references: [id])
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orders      OrderItem[]
+}
+
+model Table {
+  id        Int         @id @default(autoincrement())
+  name      String
+  capacity  Int
+  status    TableStatus
+  serverId  Int?
+  server    Employee?   @relation("ServerTables", fields: [serverId], references: [id])
+  orders    Order[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+model Order {
+  id            Int            @id @default(autoincrement())
+  tableId       Int
+  table         Table          @relation(fields: [tableId], references: [id])
+  status        OrderStatus    @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  items         OrderItem[]
+  total         Float
+  tax           Float
+  paymentMethod PaymentMethod?
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItemId Int
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+  price      Float
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  COOKING
+  READY
+  SERVED
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentMethod {
+  CASH
+  QRIS
+}
+
+model Image {
+  id         Int        @id @default(autoincrement())
+  url        String
+  altText    String?
+  createdAt  DateTime   @default(now())
+  categories Category[]
+  menuItems  MenuItem[]
+}
+
+model Employee {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String
+  role      Role     @default(SERVER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tables    Table[]  @relation("ServerTables")
+}
+
+enum Role {
+  ADMIN
+  SERVER
+  CASHIER
 }

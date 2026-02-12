@@ -92,7 +92,7 @@ const AdminSidebar = () => {
   };
 
   return (
-    <aside className="relative h-screen w-20 bg-white border-r flex flex-col">
+    <aside className="sticky top-0  h-screen w-20 bg-white border-r flex flex-col">
       <div className="flex items-center justify-center border-b py-5 px-4">
         <Link href="/" className="flex items-center justify-center">
           <sidebarContent.icon className="w-7 h-7" />
