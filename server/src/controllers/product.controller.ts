@@ -39,10 +39,10 @@ export const ProductController = {
     const payload = {
       name: req.body.name,
       sku: req.body.sku,
-      price: req.body.price,
+      price: Number(req.body.price),
       description: req.body.description,
       image: req.file,
-      categoryId: req.body.categoryId,
+      categoryId: Number(req.body.categoryId),
     };
 
     const Product = await ProductService.updateProduct(id, payload);

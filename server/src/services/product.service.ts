@@ -47,13 +47,14 @@ export const ProductService = {
     const product = await prisma.menuItem.findUnique({ where: { id } });
     if (!product) throw new Error("Product not found");
 
-    const updateData: any = {};
-    if (payload.name !== undefined) updateData.name = payload.name;
-    if (payload.description !== undefined)
-      updateData.description = payload.description;
+    const { image, ...rest } = payload;
 
-    if (payload.image) {
-      const newImage = await ImageService.uploadImage(payload.image);
+    const updateData = Object.fromEntries(
+      Object.entries(rest).filter(([_, v]) => v !== undefined),
+    );
+
+    if (image) {
+      const newImage = await ImageService.uploadImage(image);
       updateData.imageId = newImage.id;
 
       if (product.imageId) {
@@ -68,7 +69,7 @@ export const ProductService = {
     return prisma.menuItem.update({
       where: { id },
       data: updateData,
-      include: { image: true },
+      include: { image: true, category: true },
     });
   },
   deleteProduct: async (id: number) => {

@@ -1,13 +1,11 @@
-"use client";
+import { AlertDialogHeader } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,22 +21,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { CategoryService } from "@/services/category.service";
 import { ProductService } from "@/services/product.service";
 import { Category } from "@/types/entity/category";
+import { Product } from "@/types/entity/product";
 import { ProductRequest } from "@/types/payload/request/product.request";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import React from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-type CreateProductModalProps = {
+type EditProductModalProps = {
   isModalOpen: boolean;
   setIsModalOpen: (isModalOpen: boolean) => void;
+  product: Product;
 };
 
-const CreateProductModal = ({
+export const EditProductModal = ({
   isModalOpen,
   setIsModalOpen,
-}: CreateProductModalProps) => {
+  product,
+}: EditProductModalProps) => {
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: () => CategoryService.findAllCategories(),
@@ -55,17 +56,38 @@ const CreateProductModal = ({
   } = useForm({
     resolver: zodResolver(ProductRequest),
     mode: "onSubmit",
+    defaultValues: {
+      name: product.name,
+      sku: product.sku,
+      categoryId: product.category.id,
+      price: product.price,
+      description: product.description,
+    },
   });
 
-  const createProductMutation = useMutation({
-    mutationKey: ["create_product"],
-    mutationFn: (data: FormData) => ProductService.createProduct(data),
+  React.useEffect(() => {
+    if (product) {
+      reset({
+        name: product.name,
+        sku: product.sku,
+        categoryId: product.category.id,
+        price: product.price,
+        image: undefined,
+        description: product.description,
+      });
+    }
+  }, [product, reset]);
+
+  const updateProductMutation = useMutation({
+    mutationKey: ["update_product"],
+    mutationFn: (data: FormData) =>
+      ProductService.updateProduct(product.id!, data),
     onSuccess: () => {
-      toast.success("Product created successfully");
+      toast.success("Product updated successfully");
       setIsModalOpen(false);
       reset();
     },
-    onError: () => toast.error("Failed to create product"),
+    onError: () => toast.error("Failed to update product"),
     onSettled: async () => {
       return await queryClient.invalidateQueries({ queryKey: ["products"] });
     },
@@ -78,24 +100,19 @@ const CreateProductModal = ({
     formData.append("description", data.description || "");
     formData.append("price", data.price.toString());
     formData.append("categoryId", data.categoryId.toString());
-    formData.append("image", data.image[0]);
+    if (data.image?.length) {
+      formData.append("image", data.image[0]);
+    }
 
-    createProductMutation.mutate(formData);
+    updateProductMutation.mutate(formData);
   };
-
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2" onClick={() => setIsModalOpen(true)}>
-          <Plus size={18} /> Add Product
-        </Button>
-      </DialogTrigger>
-
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
-          <DialogDescription>Fill in the product details</DialogDescription>
-        </DialogHeader>
+        <AlertDialogHeader>
+          <DialogTitle>Edit Product</DialogTitle>
+          <DialogDescription>Update product details</DialogDescription>
+        </AlertDialogHeader>
 
         <form className="space-y-4 py-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2">
@@ -111,6 +128,18 @@ const CreateProductModal = ({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Optional description"
+              {...register("description")}
+            />
+            {errors.description && (
+              <p className="text-red-500">{errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="sku">SKU</Label>
             <Input id="sku" placeholder="e.g., BUR001" {...register("sku")} />
             {errors.sku && <p className="text-red-500">{errors.sku.message}</p>}
@@ -121,7 +150,6 @@ const CreateProductModal = ({
             <Controller
               name="categoryId"
               control={control}
-              defaultValue={categories?.[0]?.id ?? 0}
               render={({ field }) => (
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
@@ -132,8 +160,11 @@ const CreateProductModal = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {categories?.map((category: Category, index: number) => (
-                        <SelectItem key={index} value={category.id!.toString()}>
+                      {categories?.map((category: Category) => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id!.toString()}
+                        >
                           {category.name}
                         </SelectItem>
                       ))}
@@ -162,26 +193,24 @@ const CreateProductModal = ({
 
           <div className="space-y-2">
             <Label htmlFor="image">Product Image</Label>
+
             <Input
               type="file"
               id="image"
               accept="image/*"
               {...register("image")}
             />
-            {errors.image && (
-              <p className="text-red-500">{errors.image.message as string}</p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Optional description"
-              {...register("description")}
-            />
-            {errors.description && (
-              <p className="text-red-500">{errors.description.message}</p>
+            {product.image && (
+              <img
+                src={
+                  product.image?.url
+                    ? `${process.env.NEXT_PUBLIC_API_URL}${product.image.url}`
+                    : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
+                }
+                alt={product.name}
+                className="h-16 w-16 object-cover rounded-md border"
+              />
             )}
           </div>
 
@@ -189,8 +218,8 @@ const CreateProductModal = ({
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createProductMutation.isPending}>
-              Add Product
+            <Button type="submit" disabled={updateProductMutation.isPending}>
+              Save Changes
             </Button>
           </DialogFooter>
         </form>
@@ -198,5 +227,3 @@ const CreateProductModal = ({
     </Dialog>
   );
 };
-
-export default CreateProductModal;

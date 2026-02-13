@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const productRequest = z.object({
+export const ProductRequest = z.object({
   name: z.string().min(1, "Name is required"),
   sku: z.string().min(1, "SKU is required"),
   description: z.string().optional(),
@@ -17,4 +17,4 @@ export const productRequest = z.object({
     ),
 });
 
-export type ProductRequest = z.infer<typeof productRequest>;
+export type ProductRequest = z.infer<typeof ProductRequest>;

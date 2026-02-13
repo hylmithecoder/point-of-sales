@@ -1,15 +1,20 @@
 "use client";
 
 import CreateProductModal from "@/components/features/adminpage/product/create-product-modal";
-import { Button } from "@/components/ui/button";
+import { ProductDetailModal } from "@/components/features/adminpage/product/product-detail-modal";
+import { EditProductModal } from "@/components/features/adminpage/product/update-product-modal";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,15 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -36,65 +32,37 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { CategoryService } from "@/services/category.service";
 import { ProductService } from "@/services/product.service";
-import { Category } from "@/types/entity/category";
 import { Product } from "@/types/entity/product";
-import { useQuery } from "@tanstack/react-query";
-import { MoreVertical, Package } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, MoreVertical, Package, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-
-type MenuItem = {
-  id: number;
-  name: string;
-  sku: string;
-  category: string;
-  price: number;
-  stock: number;
-  image?: string;
-  description?: string;
-};
-
-const dummyMenuItems: MenuItem[] = [
-  {
-    id: 1,
-    name: "Cheeseburger",
-    sku: "BUR001",
-    category: "Food",
-    price: 50000,
-    stock: 20,
-    image: "/images/burger.jpg",
-    description: "Delicious cheeseburger with fresh ingredients",
-  },
-  {
-    id: 2,
-    name: "Coke",
-    sku: "DRK001",
-    category: "Drink",
-    price: 15000,
-    stock: 50,
-    image: "/images/coke.jpg",
-    description: "Refreshing cold drink",
-  },
-];
+import { toast } from "sonner";
 
 const ProductManagementPage = () => {
   const [search, setSearch] = useState("");
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(dummyMenuItems);
+  const queryClient = useQueryClient();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
-
-  const filteredItems = menuItems.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const [selectedItem, setSelectedItem] = useState<Product | null>(null);
 
   const { data } = useQuery({
     queryKey: ["products"],
     queryFn: () => ProductService.findAllProducts(),
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationKey: ["delete_product"],
+    mutationFn: (id: number) => ProductService.deleteProduct(id),
+    onSuccess: () => {
+      toast.success("Product deleted successfully");
+    },
+    onError: () => toast.error("Failed to delete product"),
+    onSettled: async () => {
+      return await queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
   });
 
   return (
@@ -190,20 +158,57 @@ const ProductManagementPage = () => {
                         <DropdownMenuItem
                           onClick={() => {
                             setOpenDetail(true);
+                            setSelectedItem(product);
                           }}
                         >
+                          <Eye size={16} className="mr-2" />
                           Detail
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
                             setOpenEdit(true);
+                            setSelectedItem(product);
                           }}
                         >
+                          <Pencil size={16} className="mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-500">
-                          Delete
-                        </DropdownMenuItem>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Trash2 size={16} className="mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you absolutely sure?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete this category from our
+                                servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() =>
+                                  deleteProductMutation.mutate(product.id!)
+                                }
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -214,19 +219,18 @@ const ProductManagementPage = () => {
         </Table>
       </div>
 
-      {/* MODALS */}
       {selectedItem && (
         <EditProductModal
-          open={openEdit}
-          setOpen={setOpenEdit}
-          item={selectedItem}
+          isModalOpen={openEdit}
+          setIsModalOpen={setOpenEdit}
+          product={selectedItem}
         />
       )}
       {selectedItem && (
-        <DetailProductModal
-          open={openDetail}
-          setOpen={setOpenDetail}
-          item={selectedItem}
+        <ProductDetailModal
+          isModalOpen={openDetail}
+          setIsModalOpen={setOpenDetail}
+          product={selectedItem}
         />
       )}
     </div>
@@ -234,141 +238,3 @@ const ProductManagementPage = () => {
 };
 
 export default ProductManagementPage;
-
-/* ---------------- ADD MODAL ---------------- */
-
-/* ---------------- EDIT MODAL ---------------- */
-const EditProductModal = ({
-  open,
-  setOpen,
-  item,
-}: {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  item: MenuItem;
-}) => {
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => CategoryService.findAllCategories(),
-  });
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Product</DialogTitle>
-          <DialogDescription>Update product details</DialogDescription>
-        </DialogHeader>
-
-        <form className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Product Name</Label>
-            <Input id="name" defaultValue={item.name} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sku">SKU</Label>
-            <Input id="sku" defaultValue={item.sku} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select defaultValue={item.category}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {categories?.map((category: Category, index: number) => {
-                    return (
-                      <SelectItem key={index} value={category.id!.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="price">Price</Label>
-            <Input type="number" id="price" defaultValue={item.price} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="stock">Stock</Label>
-            <Input type="number" id="stock" defaultValue={item.stock} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="image">Product Image</Label>
-            <Input type="file" id="image" accept="image/*" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" defaultValue={item.description} />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Save Changes</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-/* ---------------- DETAIL MODAL ---------------- */
-const DetailProductModal = ({
-  open,
-  setOpen,
-  item,
-}: {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  item: MenuItem;
-}) => {
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Product Detail</DialogTitle>
-          <DialogDescription>
-            Complete information about the product
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          <img
-            src={item.image}
-            alt={item.name}
-            className="h-40 w-full object-cover rounded"
-          />
-          <p>
-            <strong>Name:</strong> {item.name}
-          </p>
-          <p>
-            <strong>SKU:</strong> {item.sku}
-          </p>
-          <p>
-            <strong>Category:</strong> {item.category}
-          </p>
-          <p>
-            <strong>Price:</strong> Rp {item.price.toLocaleString("id-ID")}
-          </p>
-          <p>
-            <strong>Description:</strong> {item.description}
-          </p>
-        </div>
-
-        <DialogFooter>
-          <Button onClick={() => setOpen(false)}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
