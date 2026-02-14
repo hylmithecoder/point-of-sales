@@ -48,7 +48,7 @@ const ProductManagementPage = () => {
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Product | null>(null);
 
-  const { data } = useQuery({
+  const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: () => ProductService.findAllProducts(),
   });
@@ -103,7 +103,7 @@ const ProductManagementPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.length === 0 ? (
+            {products?.data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center justify-center text-slate-500">
@@ -114,7 +114,7 @@ const ProductManagementPage = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              data?.map((product: Product) => (
+              products?.data.map((product: Product) => (
                 <TableRow key={product.id} className="hover:bg-slate-50">
                   <TableCell className="font-mono text-slate-600 px-6 py-4">
                     {product.id}
@@ -132,16 +132,16 @@ const ProductManagementPage = () => {
                     {product.price}
                   </TableCell>
                   <TableCell className="text-slate-600 px-6 py-4">
-                    {product.category.name}
+                    {product.category ?? ""}
                   </TableCell>
                   <TableCell className=" px-6 py-4">
                     <img
                       src={
-                        product.image?.url
-                          ? `${process.env.NEXT_PUBLIC_API_URL}${product.image.url}`
+                        product.imageUrl
+                          ? `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.imageUrl}`
                           : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
                       }
-                      alt={product.image?.altText || "category image"}
+                      alt={product.name || "category image"}
                       className="h-16 w-16 object-cover rounded"
                     />
                   </TableCell>

@@ -59,7 +59,7 @@ export const EditProductModal = ({
     defaultValues: {
       name: product.name,
       sku: product.sku,
-      categoryId: product.category.id,
+      // categoryId: product.category.id,
       price: product.price,
       description: product.description,
     },
@@ -70,7 +70,7 @@ export const EditProductModal = ({
       reset({
         name: product.name,
         sku: product.sku,
-        categoryId: product.category.id,
+        // categoryId: product.category.id,
         price: product.price,
         image: undefined,
         description: product.description,
@@ -99,10 +99,14 @@ export const EditProductModal = ({
     formData.append("sku", data.sku);
     formData.append("description", data.description || "");
     formData.append("price", data.price.toString());
-    formData.append("categoryId", data.categoryId.toString());
+    formData.append("category", data.categoryId.toString());
+    formData.append("isAvailable", "1");
     if (data.image?.length) {
-      formData.append("image", data.image[0]);
+      formData.append("images", data.image[0]);
     }
+
+    formData.append("token", sessionStorage.getItem("session_token")!);
+    formData.append("_method", "PUT");
 
     updateProductMutation.mutate(formData);
   };
@@ -160,7 +164,7 @@ export const EditProductModal = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {categories?.map((category: Category) => (
+                      {categories?.data.map((category: Category) => (
                         <SelectItem
                           key={category.id}
                           value={category.id!.toString()}
@@ -201,11 +205,11 @@ export const EditProductModal = ({
               {...register("image")}
             />
 
-            {product.image && (
+            {product.imageUrl && (
               <img
                 src={
-                  product.image?.url
-                    ? `${process.env.NEXT_PUBLIC_API_URL}${product.image.url}`
+                  product.imageUrl
+                    ? `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.imageUrl}`
                     : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
                 }
                 alt={product.name}

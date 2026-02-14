@@ -1,28 +1,35 @@
 import { Category } from "@/types/entity/category";
+import { BaseResponse } from "@/types/payload/response/base.response";
 import { ApiClient } from "./config/api.client";
 
 export class CategoryService {
   static async findAllCategories() {
-    return ApiClient.get("category").json<Category[]>();
+    return ApiClient.get("?resource=category").json<BaseResponse<Category[]>>();
   }
 
   static async findCategoryById(id: number) {
-    return ApiClient.get(`category/${id}`).json<Category>();
+    return ApiClient.get(`?resource=category&id=${id}`).json<
+      BaseResponse<Category>
+    >();
   }
 
   static async createCategory(data: FormData) {
-    return ApiClient.post("category", {
+    return ApiClient.post("?resource=category", {
       body: data,
-    }).json<Category>();
+    }).json<BaseResponse<Category>>();
   }
 
   static async updateCategory(id: number, data: FormData) {
-    return ApiClient.put(`category/${id}`, {
+    return ApiClient.post(`?resource=category&id=${id}`, {
       body: data,
     }).json<Category>();
   }
 
   static async deleteCategory(id: number) {
-    return ApiClient.delete(`category/${id}`).json<Category>();
+    return ApiClient.delete(`?resource=category&id=${id}`, {
+      json: {
+        token: sessionStorage.getItem("session_token"),
+      },
+    }).json<Category>();
   }
 }

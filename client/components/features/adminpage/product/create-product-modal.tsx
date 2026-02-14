@@ -77,8 +77,9 @@ const CreateProductModal = ({
     formData.append("sku", data.sku);
     formData.append("description", data.description || "");
     formData.append("price", data.price.toString());
-    formData.append("categoryId", data.categoryId.toString());
-    formData.append("image", data.image[0]);
+    formData.append("category", data.categoryId.toString());
+    formData.append("images", data.image[0]);
+    formData.append("token", sessionStorage.getItem("session_token")!);
 
     createProductMutation.mutate(formData);
   };
@@ -121,7 +122,7 @@ const CreateProductModal = ({
             <Controller
               name="categoryId"
               control={control}
-              defaultValue={categories?.[0]?.id ?? 0}
+              defaultValue={categories?.data?.[0]?.id ?? 0}
               render={({ field }) => (
                 <Select
                   onValueChange={(value) => field.onChange(Number(value))}
@@ -132,11 +133,16 @@ const CreateProductModal = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {categories?.map((category: Category, index: number) => (
-                        <SelectItem key={index} value={category.id!.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {categories?.data.map(
+                        (category: Category, index: number) => (
+                          <SelectItem
+                            key={index}
+                            value={category.id!.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>

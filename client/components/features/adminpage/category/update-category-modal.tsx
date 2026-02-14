@@ -51,14 +51,13 @@ const UpdateCategoryModal = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CategoryRequest>({
     resolver: zodResolver(CategoryRequest),
     mode: "onSubmit",
     defaultValues: {
       name: category.name,
       description: category.description,
-      image: category.image,
     },
   });
 
@@ -76,11 +75,16 @@ const UpdateCategoryModal = ({
     formData.append("name", data.name);
     formData.append("description", data.description);
 
-    const fileInput = data.image?.[0];
-    if (fileInput) {
-      formData.append("image", fileInput);
+    if (data.images && data.images.length > 0) {
+      formData.append("images", data.images[0]);
     }
 
+    const token = sessionStorage.getItem("session_token");
+    if (token) {
+      formData.append("token", token);
+    }
+
+    formData.append("_method", "PUT");
     updateCategoryMutation.mutate(formData);
   };
 
@@ -115,10 +119,10 @@ const UpdateCategoryModal = ({
             <Label htmlFor="image">Category Image</Label>
 
             {/* Preview current image */}
-            {category.image?.url && (
+            {category.imageUrl && (
               <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}${category.image.url}`}
-                alt={category.image.altText || "Current category image"}
+                src={`${process.env.NEXT_PUBLIC_API_URL}${category.imageUrl}`}
+                alt={category.imageUrl || "Current category image"}
                 className="h-24 w-24 object-cover mb-2 rounded"
               />
             )}
@@ -128,12 +132,12 @@ const UpdateCategoryModal = ({
               id="image"
               type="file"
               accept="image/*"
-              {...register("image")}
+              {...register("images")}
             />
 
-            {errors.image && (
+            {errors.images && (
               <p className="text-sm text-red-500">
-                {errors.image.message as string}
+                {errors.images.message as string}
               </p>
             )}
           </div>
@@ -146,8 +150,8 @@ const UpdateCategoryModal = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
+            <Button type="submit" disabled={updateCategoryMutation.isPending}>
+              {updateCategoryMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>
