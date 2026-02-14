@@ -3,21 +3,21 @@ import multer from "multer";
 import { storage } from "../config/file.upload.ts";
 import { CategoryController } from "../controllers/category.controller.ts";
 
-const categoryRouter: Router = Router();
+const CategoryRouter: Router = Router();
 const upload = multer({ storage });
 
-categoryRouter.get("/", CategoryController.findAllCategories);
-categoryRouter.get("/:id", CategoryController.findCategoryById);
-categoryRouter.post(
+CategoryRouter.get("/", CategoryController.findAllCategories);
+CategoryRouter.get("/:id", CategoryController.findCategoryById);
+CategoryRouter.post(
   "/",
   upload.single("image"),
   CategoryController.createCategory,
 );
-categoryRouter.put(
+CategoryRouter.put(
   "/:id",
   upload.single("image"),
   CategoryController.updateCategory,
 );
-categoryRouter.delete("/:id", CategoryController.deleteCategory);
+CategoryRouter.delete("/:id", CategoryController.deleteCategory);
 
-export default categoryRouter;
+export default CategoryRouter;

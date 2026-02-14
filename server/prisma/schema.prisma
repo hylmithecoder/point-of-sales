@@ -8,37 +8,64 @@ datasource db {
 }
 
 model Category {
-  id          Int        @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
-  description String?
-  imageId     Int?
-  image       Image?     @relation(fields: [imageId], references: [id])
-  menuItems   MenuItem[]
+  description String?   @db.Text
+  imageId     Int?      @unique
+  image       Image?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("categories")
 }
 
-model MenuItem {
+model Product {
   id          Int         @id @default(autoincrement())
   name        String
   sku         String      @unique
-  description String?
+  description String?     @db.Text
   price       Float
-  imageId     Int?
-  image       Image?      @relation(fields: [imageId], references: [id])
+  imageId     Int?        @unique
+  image       Image?      @relation(fields: [imageId], references: [id], onDelete: SetNull)
   categoryId  Int
-  category    Category    @relation(fields: [categoryId], references: [id])
-  orders      OrderItem[]
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  // variants    Variant[]
+  orderItems  OrderItem[]
+  isAvailable Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([categoryId])
+  @@map("products")
 }
+
+// model Variant {
+//   id        Int      @id @default(autoincrement())
+//   name      String
+//   price     Float
+//   productId Int
+//   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([productId])
+//   @@map("variants")
+// }
 
 model Table {
   id        Int         @id @default(autoincrement())
-  name      String
+  name      String      @unique
   capacity  Int
-  status    TableStatus
-  serverId  Int?
-  server    Employee?   @relation("ServerTables", fields: [serverId], references: [id])
+  status    TableStatus @default(AVAILABLE)
+  // serverId  Int?
+  // server    Employee?   @relation("ServerTables", fields: [serverId], references: [id], onDelete: SetNull)
   orders    Order[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  // @@index([serverId])
+  @@map("tables")
 }
 
 enum TableStatus {
@@ -49,35 +76,61 @@ enum TableStatus {
 
 model Order {
   id            Int            @id @default(autoincrement())
+  orderNumber   String         @unique
   tableId       Int
-  table         Table          @relation(fields: [tableId], references: [id])
-  status        OrderStatus    @default(PENDING)
+  table         Table          @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  customerName  String?
+  status        OrderStatus    @default(NEW)
+  items         OrderItem[]
+  subtotal      Float          @default(0)
+  tax           Float          @default(0)
+  total         Float          @default(0)
+  paymentMethod PaymentMethod?
+  cashReceived  Float?
+  change        Float?
+  isPaid        Boolean        @default(false)
+  notes         String?        @db.Text
+  servedBy      Int?
+  server        Employee?      @relation("ServedOrders", fields: [servedBy], references: [id], onDelete: SetNull)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  items         OrderItem[]
-  total         Float
-  tax           Float
-  paymentMethod PaymentMethod?
+  completedAt   DateTime?
+
+  @@index([tableId])
+  @@index([status])
+  @@index([servedBy])
+  @@map("orders")
 }
 
 model OrderItem {
-  id         Int      @id @default(autoincrement())
-  orderId    Int
-  order      Order    @relation(fields: [orderId], references: [id])
-  menuItemId Int
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
-  quantity   Int
-  price      Float
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  // variantId Int?
+  quantity  Int
+  price     Float
+  subtotal  Float
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
 }
 
 enum OrderStatus {
+  NEW
   PENDING
   CONFIRMED
+  IN_PROGRESS
   COOKING
   READY
   SERVED
   COMPLETED
-  CANCELED
+  CANCELLED
 }
 
 enum PaymentMethod {
@@ -86,28 +139,37 @@ enum PaymentMethod {
 }
 
 model Image {
-  id         Int        @id @default(autoincrement())
-  url        String
-  altText    String?
-  createdAt  DateTime   @default(now())
-  categories Category[]
-  menuItems  MenuItem[]
+  id        Int       @id @default(autoincrement())
+  url       String
+  altText   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  category  Category?
+  product   Product?
+
+  @@map("images")
 }
 
 model Employee {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  phone     String?
-  password  String
-  role      Role     @default(SERVER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tables    Table[]  @relation("ServerTables")
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  phone        String?
+  password     String
+  role         Role     @default(SERVER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  // tables       Table[]  @relation("ServerTables")
+  servedOrders Order[]  @relation("ServedOrders")
+
+  @@index([email])
+  @@map("employees")
 }
 
 enum Role {
   ADMIN
   SERVER
   CASHIER
+  KITCHEN
 }

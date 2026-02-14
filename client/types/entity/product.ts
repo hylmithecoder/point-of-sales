@@ -2,7 +2,7 @@ import { Category } from "./category";
 import { Image } from "./image";
 
 export type Product = {
-  id?: number;
+  id: number;
   name: string;
   sku: string;
   description: string;
