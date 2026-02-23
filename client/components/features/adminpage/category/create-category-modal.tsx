@@ -49,11 +49,20 @@ const CreateCategoryModal = ({
     mode: "onSubmit",
   });
 
-  const onSubmit: SubmitHandler<CategoryRequest> = (data: CategoryRequest) => {
+  const onSubmit: SubmitHandler<CategoryRequest> = (data) => {
     const formData = new FormData();
+
     formData.append("name", data.name);
     formData.append("description", data.description);
-    formData.append("image", data.image[0]);
+
+    if (data.images && data.images.length > 0) {
+      formData.append("images", data.images[0]);
+    }
+
+    const token = sessionStorage.getItem("session_token");
+    if (token) {
+      formData.append("token", token);
+    }
 
     createCategoryMutation.mutate(formData);
   };
@@ -109,11 +118,11 @@ const CreateCategoryModal = ({
               id="image"
               type="file"
               accept="image/*"
-              {...register("image")}
+              {...register("images")}
             />
-            {errors.image && (
+            {errors.images && (
               <p className="text-sm text-red-500">
-                {errors.image.message as string}
+                {errors.images.message as string}
               </p>
             )}
           </div>

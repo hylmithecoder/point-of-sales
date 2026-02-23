@@ -11,7 +11,8 @@ const RETRIED_HEADER = "X-Retried";
 
 export const ApiClient = ky.extend({
   prefixUrl: process.env.NEXT_PUBLIC_API_URL,
-  credentials: "include",
+  // credentials: "include",
+  timeout: 100000,
   retry: { limit: 0 },
   //   hooks: {
   //     beforeError: [

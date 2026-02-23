@@ -6,7 +6,7 @@ export const CategoryRequest = z.object({
     .min(1, "Category name is required")
     .max(100, "Category name cannot exceed 100 characters"),
   description: z.string().min(1, "Category description is required"),
-  image: z
+  images: z
     .any()
     .refine((files) => files?.length === 1, "Image is required")
     .refine(

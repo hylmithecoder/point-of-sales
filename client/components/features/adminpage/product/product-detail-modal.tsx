@@ -33,8 +33,8 @@ export const ProductDetailModal = ({
         <div className="space-y-4 py-2">
           <img
             src={
-              product.image?.url
-                ? `${process.env.NEXT_PUBLIC_API_URL}${product.image.url}`
+              product.imageUrl
+                ? `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.imageUrl}`
                 : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
             }
             alt={product.name}
@@ -47,7 +47,7 @@ export const ProductDetailModal = ({
             <strong>SKU:</strong> {product.sku}
           </p>
           <p>
-            <strong>Category:</strong> {product.category.name}
+            <strong>Category:</strong> {product.category}
           </p>
           <p>
             <strong>Price:</strong> Rp {product.price.toLocaleString("id-ID")}

@@ -46,7 +46,7 @@ const CategoryPage = () => {
 
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
+  const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: () => CategoryService.findAllCategories(),
   });
@@ -103,7 +103,7 @@ const CategoryPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.length === 0 ? (
+            {categories?.data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center justify-center text-slate-500">
@@ -118,7 +118,7 @@ const CategoryPage = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              data?.map((category: Category) => (
+              categories?.data.map((category: Category) => (
                 <TableRow key={category.id} className="hover:bg-slate-50">
                   <TableCell className="font-mono text-slate-600 px-6 py-4">
                     {category.id}
@@ -132,11 +132,11 @@ const CategoryPage = () => {
                   <TableCell className=" px-6 py-4">
                     <img
                       src={
-                        category.image?.url
-                          ? `${process.env.NEXT_PUBLIC_API_URL}${category.image.url}`
+                        category.imageUrl
+                          ? `${process.env.NEXT_PUBLIC_API_URL}/uploads/${category.imageUrl}`
                           : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
                       }
-                      alt={category.image?.altText || "category image"}
+                      alt={category.name || "category image"}
                       className="h-16 w-16 object-cover rounded"
                     />
                   </TableCell>

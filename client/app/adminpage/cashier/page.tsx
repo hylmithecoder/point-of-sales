@@ -373,7 +373,7 @@ const Page = () => {
             </h2>
             <ScrollArea className="w-full max-w-full lg:max-w-6xl pb-2 rounded-md">
               <div className="grid grid-flow-col auto-cols-[160px] gap-3">
-                {categories?.map((category: Category, index: number) => (
+                {categories?.data.map((category: Category, index: number) => (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.name)}
@@ -386,11 +386,11 @@ const Page = () => {
                     <div className="flex justify-center mb-2">
                       <img
                         src={
-                          category.image?.url
-                            ? `${process.env.NEXT_PUBLIC_API_URL}${category.image.url}`
+                          category.imageUrl
+                            ? `${process.env.NEXT_PUBLIC_API_URL}${category.imageUrl}`
                             : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSljKrqphYckKY5BewuAI5AFjnwORv5Mtxl7w&s"
                         }
-                        alt={category.image?.altText || "category image"}
+                        alt={category.name || "category image"}
                         className="h-16 w-16 object-cover rounded"
                       />
                     </div>
